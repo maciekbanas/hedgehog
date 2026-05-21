@@ -1,0 +1,12 @@
+name: hedgehog
+title: hedgehog
+username: maciekbanas
+account: maciekbanas
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 17399472
+bundleId: 12022673
+url: https://maciekbanas.shinyapps.io/hedgehog/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
