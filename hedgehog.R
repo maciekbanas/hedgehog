@@ -6,6 +6,7 @@ moves <- c("move_left", "move_right", "move_up", "move_down")
 
 ui <- shiny::tagList(
   shinyalert::useShinyalert(),
+  shiny::tags$script(shiny::HTML("\n    document.addEventListener(\"DOMContentLoaded\", function () {\n      window.scrollTo({ top: 0, left: 0, behavior: \"auto\" });\n    });\n  ")),
   game$ui()
 )
 
