@@ -6,6 +6,7 @@ moves <- c("move_left", "move_right", "move_up", "move_down")
 
 ui <- shiny::tagList(
   shinyalert::useShinyalert(),
+  shiny::tags$script(shiny::HTML("\n    Shiny.addCustomMessageHandler(\"scroll_to_top\", function () {\n      window.scrollTo({ top: 0, left: 0, behavior: \"auto\" });\n    });\n  ")),
   game$ui()
 )
 
@@ -48,6 +49,10 @@ server <- function(input, output, session) {
   )
   
   game$set_shiny_session()
+  scroll_to_top <- function() {
+    session$sendCustomMessage("scroll_to_top", list())
+  }
+
   
   grass <- game$add_image(
     name = "grass", 
@@ -156,6 +161,7 @@ server <- function(input, output, session) {
         state$score <- 0
         state$collected <- list()
         state$current_level <- next_level
+        scroll_to_top()
         score_text$set(paste0("Level ", state$current_level, " score: 0"))
       }
     )
@@ -167,6 +173,7 @@ server <- function(input, output, session) {
       text = "Collect apples and avoid attackers. Finish all levels to win! Click OK to start.",
       type = "info", closeOnClickOutside = FALSE, showCancelButton = FALSE,
       callbackR = function(value) {
+        scroll_to_top()
         state$started <- TRUE
         hedgehog$add_player_controls(directions = c("left", "right", "up", "down"), speed = base_speed)
       }
