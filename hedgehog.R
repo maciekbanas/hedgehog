@@ -130,8 +130,8 @@ server <- function(input, output, session) {
       state$game_over <- TRUE
       shinyalert::shinyalert(
         title = "Game over", text = paste0("A ", enemy_name, " caught the hedgehog. Try again!"), type = "error",
-        closeOnClickOutside = FALSE, showCancelButton = FALSE,
-        callbackR = function(value) shiny::stopApp()
+        closeOnClickOutside = FALSE, showCancelButton = FALSE, confirmButtonText = "Restart",
+        callbackR = function(value) reset_game()
       )
     }, input = input)
   }
@@ -249,6 +249,26 @@ server <- function(input, output, session) {
       }, input = input)
     
     list(apples = apples_group, attackers = attackers)
+  }
+  
+  reset_game <- function() {
+    pause_gameplay()
+    for (level in state$levels) {
+      if (!is.null(level$attackers) && length(level$attackers) > 0) {
+        for (enemy in level$attackers) enemy$destroy()
+      }
+      if (!is.null(level$apples)) level$apples$destroy()
+    }
+    
+    state$score <- 0
+    state$current_level <- 1
+    state$game_over <- FALSE
+    state$started <- FALSE
+    state$collected <- list()
+    state$is_boosting <- FALSE
+    state$levels <- list()
+    score_text$set("Level 1 score: 0")
+    state$levels[["1"]] <- init_level(1)
   }
   
   
