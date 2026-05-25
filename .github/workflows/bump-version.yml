@@ -1,80 +1,44 @@
-name: Bump Version
+name: ⬆️ Check Version Bump
 
 on:
   pull_request:
     branches: [main]
 
 jobs:
-  bump-version:
+  check-version:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout source branch
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: source
 
-      - name: Bump DESCRIPTION version
-        env:
-          PART: ${{ github.event.inputs.part }}
+      - name: Checkout target branch
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: target
+
+      - name: Compare versions
+        id: compare_versions
         run: |
-          set -euo pipefail
+          SOURCE_VERSION=$(awk '/^Version:/ { print $2 }' source/DESCRIPTION)
+          TARGET_VERSION=$(awk '/^Version:/ { print $2 }' target/DESCRIPTION)
+          echo "Source package version: $SOURCE_VERSION"
+          echo "Target package version: $TARGET_VERSION"
 
-          current_version="$(awk -F': *' '/^Version:/ {print $2}' DESCRIPTION)"
-          if [ -z "${current_version}" ]; then
-            echo "Could not find Version field in DESCRIPTION"
-            exit 1
+          if [ "$SOURCE_VERSION" == "$TARGET_VERSION" ]; then
+            echo "Versions are identical"
+            echo "::set-output name=versions_identical::true"
+          else
+            echo "Versions differ"
+            echo "::set-output name=versions_identical::false"
           fi
 
-          IFS='.' read -r major minor patch devel extra <<< "${current_version}"
-          if [ -n "${extra:-}" ] || [ -z "${major:-}" ] || [ -z "${minor:-}" ] || [ -z "${patch:-}" ] || [ -z "${devel:-}" ]; then
-            echo "Expected version format major.minor.patch.devel, got: ${current_version}"
-            exit 1
-          fi
-
-          case "${PART}" in
-            major)
-              major=$((major + 1))
-              minor=0
-              patch=0
-              devel=9000
-              ;;
-            minor)
-              minor=$((minor + 1))
-              patch=0
-              devel=9000
-              ;;
-            patch)
-              patch=$((patch + 1))
-              devel=9000
-              ;;
-            devel)
-              devel=$((devel + 1))
-              ;;
-            *)
-              echo "Unsupported part: ${PART}"
-              exit 1
-              ;;
-          esac
-
-          new_version="${major}.${minor}.${patch}.${devel}"
-          sed -i "s/^Version: .*/Version: ${new_version}/" DESCRIPTION
-
-          echo "Bumped version ${current_version} -> ${new_version}"
-
-      - name: Commit and push
-        env:
-          PART: ${{ github.event.inputs.part }}
+      - name: Fail if versions are identical
+        if: steps.compare_versions.outputs.versions_identical == 'true'
         run: |
-          set -euo pipefail
-
-          if git diff --quiet; then
-            echo "No version change to commit"
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          new_version="$(awk -F': *' '/^Version:/ {print $2}' DESCRIPTION)"
-          git add DESCRIPTION
-          git commit -m "chore: bump version (${PART}) to ${new_version}"
-          git push
+          echo "The package versions are identical between the source and target branches."
+          exit 1
