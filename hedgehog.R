@@ -10,6 +10,8 @@ ui <- shiny::tagList(
 )
 
 server <- function(input, output, session) {
+  shiny::addResourcePath("assets", "assets")
+
   state <- new.env(parent = emptyenv())
   state$score <- 0
   state$current_level <- 1
