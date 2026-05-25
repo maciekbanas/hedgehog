@@ -1,6 +1,6 @@
 library(shinyphaser)
 
-app_version <- "0.0.0.9000"
+app_version <- "0.0.0.9004"
 
 game <- PhaserGame$new(width = 1500, height = 800)
 
@@ -8,6 +8,35 @@ moves <- c("move_left", "move_right", "move_up", "move_down")
 
 ui <- shiny::tagList(
   shinyalert::useShinyalert(),
+  shiny::tags$script(shiny::HTML("
+    (function() {
+      const KEY = 'hedgehog_assets_reload_once_v1';
+      const REQUIRED_ASSETS = [
+        'assets/perks/apple_20.png',
+        'assets/perks/apple.png',
+        'assets/terrain/grass.png'
+      ];
+
+      function verifyAssets() {
+        return Promise.all(REQUIRED_ASSETS.map(function(url) {
+          return fetch(url, { method: 'HEAD', cache: 'no-store' })
+            .then(function(resp) { return resp.ok; })
+            .catch(function() { return false; });
+        }));
+      }
+
+      if (sessionStorage.getItem(KEY) === 'done') return;
+
+      verifyAssets().then(function(results) {
+        if (results.every(Boolean)) {
+          sessionStorage.setItem(KEY, 'done');
+          return;
+        }
+        sessionStorage.setItem(KEY, 'done');
+        window.location.reload();
+      });
+    })();
+  ")),
   shiny::tags$div(
     style = paste("position: fixed; top: 680px; right: 20px;",
                   "z-index: 9999; color: white; font-weight: 500;"),
