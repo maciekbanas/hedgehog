@@ -14,7 +14,8 @@ ui <- shiny::tagList(
       const REQUIRED_ASSETS = [
         'assets/perks/apple_20.png',
         'assets/perks/apple.png',
-        'assets/terrain/grass.png'
+        'assets/terrain/grass.png',
+        'assets/obstacles/rock.png'
       ];
 
       function verifyAssets() {
@@ -67,21 +68,24 @@ server <- function(input, output, session) {
       attackers = 4,
       enemy_name = "badger",
       speed = c(30, 40, 50),
-      distance = c(80, 110, 120, 150)
+      distance = c(80, 110, 120, 150),
+      obstacles = data.frame(x = c(360, 610, 860), y = c(220, 380, 140))
     ),
     `2` = list(
       apples = data.frame(x = c(120, 220, 340, 480, 620, 760, 860, 930, 520), y = c(90, 520, 200, 430, 100, 510, 260, 430, 300)),
       attackers = 7,
       enemy_name = "badger",
       speed = c(45, 55, 65, 75),
-      distance = c(100, 130, 150, 180)
+      distance = c(100, 130, 150, 180),
+      obstacles = data.frame(x = c(180, 410, 690, 880), y = c(360, 140, 300, 500))
     ),
     `3` = list(
       apples = data.frame(x = c(80, 180, 300, 420, 560, 700, 820, 940, 260, 640, 520), y = c(80, 240, 120, 500, 280, 460, 160, 340, 540, 90, 380)),
       attackers = 9,
       enemy_name = "fox",
       speed = c(80, 95, 110, 125),
-      distance = c(120, 150, 190, 220)
+      distance = c(120, 150, 190, 220),
+      obstacles = data.frame(x = c(130, 320, 520, 740, 910), y = c(420, 180, 520, 260, 120))
     )
   )
   
@@ -116,6 +120,8 @@ server <- function(input, output, session) {
       frame_rate = 8
     )
   })
+  
+  game$enable_terrain_collision("hedgehog")
   
   score_text <- game$add_text(text = "Level 1 score: 0", id = "score_text", x = 30, y = 30)
   
@@ -245,6 +251,14 @@ server <- function(input, output, session) {
     cfg <- level_config[[as.character(level_id)]]
     apples_group <- game$add_static_group(name = paste0("apples_lvl", level_id), url = "assets/perks/apple_20.png")
     for (i in seq_len(nrow(cfg$apples))) apples_group$create(x = cfg$apples$x[i], y = cfg$apples$y[i])
+
+    obstacles_group <- game$add_static_group(name = paste0("obstacles_lvl", level_id), url = "assets/obstacles/rock.png")
+    for (i in seq_len(nrow(cfg$obstacles))) obstacles_group$create(x = cfg$obstacles$x[i], y = cfg$obstacles$y[i])
+
+    game$add_collider(
+      object_name = "hedgehog",
+      group_name = paste0("obstacles_lvl", level_id)
+    )
     
     attackers <- create_attackers(paste0("attacker_lvl", level_id, "_"), cfg$attackers, cfg$enemy_name)
     for (i in seq_along(attackers)) add_enemy_overlap(paste0("attacker_lvl", level_id, "_", i), level_id, cfg$enemy_name)
@@ -277,7 +291,7 @@ server <- function(input, output, session) {
         }
       }, input = input)
     
-    list(apples = apples_group, attackers = attackers)
+    list(apples = apples_group, obstacles = obstacles_group, attackers = attackers)
   }
   
   game$add_control("Space", action = function() {
