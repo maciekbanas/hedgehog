@@ -1,0 +1,93 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      part:
+        description: "Version part to bump"
+        required: true
+        default: devel
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+          - devel
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bump DESCRIPTION version
+        env:
+          PART: ${{ github.event.inputs.part }}
+        run: |
+          set -euo pipefail
+
+          current_version="$(awk -F': *' '/^Version:/ {print $2}' DESCRIPTION)"
+          if [ -z "${current_version}" ]; then
+            echo "Could not find Version field in DESCRIPTION"
+            exit 1
+          fi
+
+          IFS='.' read -r major minor patch devel extra <<< "${current_version}"
+          if [ -n "${extra:-}" ] || [ -z "${major:-}" ] || [ -z "${minor:-}" ] || [ -z "${patch:-}" ] || [ -z "${devel:-}" ]; then
+            echo "Expected version format major.minor.patch.devel, got: ${current_version}"
+            exit 1
+          fi
+
+          case "${PART}" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              devel=9000
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              devel=9000
+              ;;
+            patch)
+              patch=$((patch + 1))
+              devel=9000
+              ;;
+            devel)
+              devel=$((devel + 1))
+              ;;
+            *)
+              echo "Unsupported part: ${PART}"
+              exit 1
+              ;;
+          esac
+
+          new_version="${major}.${minor}.${patch}.${devel}"
+          sed -i "s/^Version: .*/Version: ${new_version}/" DESCRIPTION
+
+          echo "Bumped version ${current_version} -> ${new_version}"
+
+      - name: Commit and push
+        env:
+          PART: ${{ github.event.inputs.part }}
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet; then
+            echo "No version change to commit"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          new_version="$(awk -F': *' '/^Version:/ {print $2}' DESCRIPTION)"
+          git add DESCRIPTION
+          git commit -m "chore: bump version (${PART}) to ${new_version}"
+          git push
