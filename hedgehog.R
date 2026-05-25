@@ -1,6 +1,6 @@
 library(shinyphaser)
 
-app_version <- "0.0.0.9000"
+app_version <- "0.0.0.9003"
 
 game <- PhaserGame$new(width = 1500, height = 800)
 
