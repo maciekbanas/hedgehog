@@ -130,8 +130,8 @@ server <- function(input, output, session) {
       state$game_over <- TRUE
       shinyalert::shinyalert(
         title = "Game over", text = paste0("A ", enemy_name, " caught the hedgehog. Try again!"), type = "error",
-        closeOnClickOutside = FALSE, showCancelButton = FALSE,
-        callbackR = function(value) shiny::stopApp()
+        closeOnClickOutside = FALSE, showCancelButton = FALSE, confirmButtonText = "Restart",
+        callbackR = function(value) session$reload()
       )
     }, input = input)
   }
@@ -250,7 +250,6 @@ server <- function(input, output, session) {
     
     list(apples = apples_group, attackers = attackers)
   }
-  
   
   game$add_control("Space", action = function() {
     if (!state$started || state$game_over || state$is_boosting) return(invisible(NULL))

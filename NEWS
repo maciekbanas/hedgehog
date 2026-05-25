@@ -1,7 +1,3 @@
-# hedgehog development news
+# hedgehog (development version)
 
-## hedgehog 0.0.0.9000
-
-* Added a package DESCRIPTION file with development version metadata.
-* Added a NEWS file for tracking release and development updates.
-* Displayed the app version in the top-right corner of the game UI.
+First released version of game.
