@@ -9,8 +9,9 @@ moves <- c("move_left", "move_right", "move_up", "move_down")
 ui <- shiny::tagList(
   shinyalert::useShinyalert(),
   shiny::tags$div(
-    style = "position: fixed; top: 10px; right: 16px; z-index: 9999; color: white; font-weight: 700; text-shadow: 0 0 4px #000;",
-    paste0("v", app_version)
+    style = paste("position: fixed; top: 680px; right: 20px;",
+                  "z-index: 9999; color: white; font-weight: 500;"),
+    app_version
   ),
   game$ui()
 )
