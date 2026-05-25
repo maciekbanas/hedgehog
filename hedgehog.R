@@ -162,20 +162,25 @@ server <- function(input, output, session) {
   }
   
   show_level_one_tutorial <- function() {
+    tutorial_image <- "assets/hedgehog/sprites/hedgehog_move_right_32.png"
+    
     shinyalert::shinyalert(
       title = "Welcome to the game!",
       text = "Move the hedgehog using the arrow keys.",
-      type = "info", closeOnClickOutside = FALSE, showCancelButton = FALSE,
+      type = NULL, imageUrl = tutorial_image, imageWidth = 96, imageHeight = 96,
+      closeOnClickOutside = FALSE, showCancelButton = FALSE,
       callbackR = function(value) {
         shinyalert::shinyalert(
           title = "Your goal",
           text = "Gather all apples and watch out for other animals.",
-          type = "info", closeOnClickOutside = FALSE, showCancelButton = FALSE,
+          type = NULL, imageUrl = tutorial_image, imageWidth = 96, imageHeight = 96,
+          closeOnClickOutside = FALSE, showCancelButton = FALSE,
           callbackR = function(value) {
             shinyalert::shinyalert(
               title = "Speed boost tip",
               text = "Press Space while moving to make the hedgehog run faster.",
-              type = "info", closeOnClickOutside = FALSE, showCancelButton = FALSE,
+              type = NULL, imageUrl = tutorial_image, imageWidth = 96, imageHeight = 96,
+              closeOnClickOutside = FALSE, showCancelButton = FALSE,
               callbackR = function(value) {
                 state$started <- TRUE
                 hedgehog$add_player_controls(directions = c("left", "right", "up", "down"), speed = base_speed)
