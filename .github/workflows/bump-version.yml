@@ -1,21 +1,7 @@
 name: Bump Version
 
-on:
-  workflow_dispatch:
-    inputs:
-      part:
-        description: "Version part to bump"
-        required: true
-        default: devel
-        type: choice
-        options:
-          - major
-          - minor
-          - patch
-          - devel
-
-permissions:
-  contents: write
+pull_request:
+    branches: [main]
 
 jobs:
   bump-version:
