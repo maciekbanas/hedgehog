@@ -10,6 +10,8 @@ ui <- shiny::tagList(
 )
 
 server <- function(input, output, session) {
+  shiny::addResourcePath("assets", "assets")
+
   state <- new.env(parent = emptyenv())
   state$score <- 0
   state$current_level <- 1
@@ -161,16 +163,49 @@ server <- function(input, output, session) {
     )
   }
   
-  init_level <- function(level_id) {
+  show_level_one_tutorial <- function() {
     shinyalert::shinyalert(
-      title = paste0("Welcome to level", level_id, "!"),
-      text = "Collect apples and avoid attackers. Finish all levels to win! Click OK to start.",
-      type = "info", closeOnClickOutside = FALSE, showCancelButton = FALSE,
+      title = "Welcome to the game!",
+      text = "Move the hedgehog using the arrow keys.",
+      type = "", imageUrl = "assets/sprites/hedgehog_100.png", imageWidth = 96, imageHeight = 96,
+      closeOnClickOutside = FALSE, showCancelButton = FALSE,
       callbackR = function(value) {
-        state$started <- TRUE
-        hedgehog$add_player_controls(directions = c("left", "right", "up", "down"), speed = base_speed)
+        shinyalert::shinyalert(
+          title = "Your goal",
+          text = "Gather all apples and watch out for other animals.",
+          type = "", imageUrl = "assets/perks/apple.png", imageWidth = 96, imageHeight = 96,
+          closeOnClickOutside = FALSE, showCancelButton = FALSE,
+          callbackR = function(value) {
+            shinyalert::shinyalert(
+              title = "Speed boost tip",
+              text = "Press Space while moving to make the hedgehog run faster.",
+              type = "", imageUrl = "assets/sprites/hedgehog_run_100.png", imageWidth = 96, imageHeight = 96,
+              closeOnClickOutside = FALSE, showCancelButton = FALSE,
+              callbackR = function(value) {
+                state$started <- TRUE
+                hedgehog$add_player_controls(directions = c("left", "right", "up", "down"), speed = base_speed)
+              }
+            )
+          }
+        )
       }
     )
+  }
+  
+  init_level <- function(level_id) {
+    if (level_id == 1) {
+      show_level_one_tutorial()
+    } else {
+      shinyalert::shinyalert(
+        title = paste0("Welcome to level ", level_id, "!"),
+        text = "Collect apples and avoid attackers. Finish all levels to win! Click OK to start.",
+        type = "info", closeOnClickOutside = FALSE, showCancelButton = FALSE,
+        callbackR = function(value) {
+          state$started <- TRUE
+          hedgehog$add_player_controls(directions = c("left", "right", "up", "down"), speed = base_speed)
+        }
+      )
+    }
     cfg <- level_config[[as.character(level_id)]]
     apples_group <- game$add_static_group(name = paste0("apples_lvl", level_id), url = "assets/hedgehog/perks/apple_20.png")
     for (i in seq_len(nrow(cfg$apples))) apples_group$create(x = cfg$apples$x[i], y = cfg$apples$y[i])
