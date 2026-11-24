@@ -1,3 +1,7 @@
+# hedgehog 0.0.0.9005
+
+* Migrate the game and its level obstacles to the shinyphaser 0.2.0 API.
+
 # hedgehog (development version)
 
 First released version of game.
