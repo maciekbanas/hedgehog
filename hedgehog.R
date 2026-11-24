@@ -1,13 +1,14 @@
 library(shinyphaser)
 
-app_version <- "0.0.0.9004"
+app_version <- "0.0.0.9005"
 
-game <- PhaserGame$new(width = 1500, height = 800)
+shiny::addResourcePath("assets", "assets")
+
+scene <- PhaserGame$new(width = 1500, height = 800)
 
 moves <- c("move_left", "move_right", "move_up", "move_down")
 
 ui <- shiny::tagList(
-  shinyalert::useShinyalert(),
   shiny::tags$script(shiny::HTML("
     (function() {
       const KEY = 'hedgehog_assets_reload_once_v1';
@@ -43,12 +44,10 @@ ui <- shiny::tagList(
                   "z-index: 9999; color: white; font-weight: 500;"),
     app_version
   ),
-  game$ui()
+  scene$use_phaser()
 )
 
 server <- function(input, output, session) {
-  shiny::addResourcePath("assets", "assets")
-
   state <- new.env(parent = emptyenv())
   state$score <- 0
   state$current_level <- 1
@@ -89,7 +88,8 @@ server <- function(input, output, session) {
     )
   )
   
-  game$set_shiny_session()
+  game <- PhaserGame$new(id = scene$id)
+  game$set_shiny_session(session)
   
   grass <- game$add_image(
     name = "grass", 
@@ -160,7 +160,7 @@ server <- function(input, output, session) {
   }
   
   add_enemy_overlap <- function(name, level_id, enemy_name) {
-    game$add_overlap("hedgehog", object_two = name, callback_fun = function(evt) {
+    game$add_overlap("hedgehog", object_two = name, server_action = function(evt) {
       if (!state$started || state$game_over || state$current_level != level_id) return(invisible(NULL))
       state$game_over <- TRUE
       shinyalert::shinyalert(
@@ -168,7 +168,7 @@ server <- function(input, output, session) {
         closeOnClickOutside = FALSE, showCancelButton = FALSE, confirmButtonText = "Restart",
         callbackR = function(value) session$reload()
       )
-    }, input = input)
+    }, input = input, mode = "stay", interval = 100)
   }
   
   pause_gameplay <- function(level_id = state$current_level) {
@@ -192,7 +192,12 @@ server <- function(input, output, session) {
       text = paste("Great! Click OK to move to level", level_id + 1, "."),
       type = "success", closeOnClickOutside = FALSE, showCancelButton = FALSE,
       callbackR = function(value) {
-        for (enemy in state$levels[[as.character(level_id)]]$attackers) enemy$destroy()
+        previous <- state$levels[[as.character(level_id)]]
+        for (enemy in previous$attackers) enemy$destroy()
+        rocks <- level_config[[as.character(level_id)]]$obstacles
+        for (i in seq_len(nrow(rocks))) {
+          previous$obstacles$disable(list(x2 = rocks$x[i], y2 = rocks$y[i]))
+        }
         next_level <- level_id + 1
         if (is.null(state$levels[[as.character(next_level)]])) {
           state$levels[[as.character(next_level)]] <- init_level(next_level)
@@ -256,17 +261,17 @@ server <- function(input, output, session) {
     for (i in seq_len(nrow(cfg$obstacles))) obstacles_group$create(x = cfg$obstacles$x[i], y = cfg$obstacles$y[i])
 
     game$add_collider(
-      object_name = "hedgehog",
-      group_name = paste0("obstacles_lvl", level_id)
+      object_one = "hedgehog",
+      group = paste0("obstacles_lvl", level_id)
     )
     
     attackers <- create_attackers(paste0("attacker_lvl", level_id, "_"), cfg$attackers, cfg$enemy_name)
     for (i in seq_along(attackers)) add_enemy_overlap(paste0("attacker_lvl", level_id, "_", i), level_id, cfg$enemy_name)
     
     game$add_overlap(
-      object_name = "hedgehog", 
-      group_name = paste0("apples_lvl", level_id), 
-      callback_fun = function(evt) {
+      object_one = "hedgehog",
+      group = paste0("apples_lvl", level_id),
+      server_action = function(evt) {
         if (!state$started || state$current_level != level_id || state$game_over) return(invisible(NULL))
         
         apple_key <- paste(evt$x2, evt$y2, sep = ":")
@@ -289,17 +294,17 @@ server <- function(input, output, session) {
             )
           }
         }
-      }, input = input)
+      }, input = input, mode = "stay", interval = 100)
     
     list(apples = apples_group, obstacles = obstacles_group, attackers = attackers)
   }
   
-  game$add_control("Space", action = function() {
+  game$add_control("Space", server_action = function(event) {
     if (!state$started || state$game_over || state$is_boosting) return(invisible(NULL))
     
     state$is_boosting <- TRUE
-    hedgehog$play_animation("hedgehog_run", duration = boost_duration * 1000)
     hedgehog$add_player_controls(directions = c("left", "right", "up", "down"), speed = boost_speed)
+    hedgehog$set_player_animation_prefix("hedgehog_run")
     
     later::later(function() {
       state$is_boosting <- FALSE

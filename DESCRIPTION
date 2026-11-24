@@ -1,8 +1,14 @@
 Package: hedgehog
 Title: Hedgehog Shiny Phaser Game
-Version: 0.0.0.9004
+Version: 0.0.0.9005
 Authors@R: person("Hedgehog", "Developers", email = "devnull@example.com", role = c("aut", "cre"))
 Description: Browser game built with shinyphaser where a hedgehog collects apples while avoiding enemies.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Imports:
+    later,
+    purrr,
+    shiny,
+    shinyalert,
+    shinyphaser (>= 0.2.0)
