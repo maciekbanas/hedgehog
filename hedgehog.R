@@ -299,7 +299,7 @@ server <- function(input, output, session) {
     list(apples = apples_group, obstacles = obstacles_group, attackers = attackers)
   }
   
-  game$add_control("Space", server_action = function() {
+  game$add_control("Space", server_action = function(event) {
     if (!state$started || state$game_over || state$is_boosting) return(invisible(NULL))
     
     state$is_boosting <- TRUE
